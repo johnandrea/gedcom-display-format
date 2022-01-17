@@ -6,20 +6,45 @@ a network visualization too.
 
 This code is released under the MIT License: https://opensource.org/licenses/MIT
 Copyright (c) 2022 John A. Andrea
-v0.0.0
+v0.9.0
 
 No support provided.
 """
 
 import sys
+import re
+import argparse
 import readgedcom
+
+
+def get_program_options():
+    results = dict()
+
+    results['format'] = 'graphml'
+    results['infile'] = None
+
+    arg_help = 'Convert gedcom to network graph format.'
+    parser = argparse.ArgumentParser( description=arg_help )
+
+    arg_help = 'Output format. Dedault: ' + results['format']
+    parser.add_argument( '--format', default=results['format'], type=str, help=arg_help )
+
+    parser.add_argument('infile', type=argparse.FileType('r') )
+
+    args = parser.parse_args()
+
+    results['format'] = args.format
+    results['infile'] = args.infile.name
+
+    return results
+
 
 def output_header():
     print( """\
 <?xml version="1.0" encoding="UTF-8"?>
-<graphml xmlns="http://graphml.graphdrawing.org/xmlns"  
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns 
+      xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
 """ )
 
@@ -50,6 +75,16 @@ def end_graph():
     print( '</graph>' )
 
 
+def get_name( individual ):
+    result = individual['name'][0]['value']
+    if readgedcom.UNKNOWN_NAME in result:
+       result = 'unknown'
+    else:
+       # remove any suffix after the end slash
+       result = re.sub( r'/[^/]*$', '', result ).replace('/','').strip()
+    return result
+
+
 def output_node( n, color, name ):
     print( '<node id="n' + str(n) + '">' )
     print( '  <data key="d0">' + name + '</data>' )
@@ -59,7 +94,7 @@ def output_node( n, color, name ):
 
 def output_names( n, color, node_match ):
     for indi in data[ikey]:
-        name = str( indi ) #for now
+        name = get_name( data[ikey][indi] )
         node_match[indi] = n
         output_node( n, color, name )
         n += 1
@@ -100,11 +135,16 @@ def output_connectors( parent_color, child_color, indi_match, fam_match ):
                output_edge( n, source, target, parent_color )
                n += 1
 
+options = get_program_options()
 
 ikey = readgedcom.PARSED_INDI
 fkey = readgedcom.PARSED_FAM
 
-data = readgedcom.read_file( sys.argv[1] )
+data = readgedcom.read_file( options['infile'] )
+
+if ikey not in data:
+   print( 'Unexpected data in input file', file=sys.stderr )
+   sys.exit(1)
 
 # put each person into a node
 # and each family also
