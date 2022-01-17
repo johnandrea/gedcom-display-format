@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <vizmap id="VizMap-2022_01_17-01_42" documentVersion="3.1">
-    <visualStyle name="mine">
+    <visualStyle name="gedcom">
         <network>
             <visualProperty default="#FFFFFF" name="NETWORK_BACKGROUND_PAINT"/>
             <visualProperty default="false" name="NETWORK_NODE_LABEL_SELECTION"/>
