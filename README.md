@@ -14,7 +14,7 @@ gedcom-display-format.py gedcom-filename > formatted-file
 
 ## Formats ##
 
-Currently only produces GraphML
+Currently only produces GraphML ( http://graphml.graphdrawing.org )
 
 ## Installation ##
 
