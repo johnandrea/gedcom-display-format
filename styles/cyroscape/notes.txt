@@ -1,1 +1,3 @@
-Style files to be imported for the corresponding converted format. 
+Style files to be imported for the corresponding converted format.
+
+After importing the data file, import this style. Then under the style tab select the "gedcom" type.
