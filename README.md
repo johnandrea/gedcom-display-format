@@ -9,7 +9,7 @@ Output files can be used in display tools such as:
 ## Usage ##
 
 ```
-gedcom-display-format gedcom-filename > formatted-file
+gedcom-display-format.py gedcom-filename > formatted-file
 ```
 
 ## Formats ##
