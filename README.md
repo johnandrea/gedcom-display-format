@@ -1,5 +1,7 @@
 # gedcom-display-format
-Convert a GEDCOM file to a format for display in network visualization
+Convert a GEDCOM file to a format for display in network visualization.
+
+The display may be of limited value for large trees as it takes a long time to arrange into a useful structure.
 
 ## Display ##
 
