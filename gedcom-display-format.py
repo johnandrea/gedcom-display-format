@@ -6,7 +6,7 @@ a network visualization too.
 
 This code is released under the MIT License: https://opensource.org/licenses/MIT
 Copyright (c) 2022 John A. Andrea
-v0.9.0
+v0.9.1
 
 No support provided.
 """
@@ -76,7 +76,7 @@ def end_graph():
 
 
 def get_name( individual ):
-    result = individual['name'][0]['value']
+    result = individual['name'][0]['html']
     if readgedcom.UNKNOWN_NAME in result:
        result = 'unknown'
     else:
