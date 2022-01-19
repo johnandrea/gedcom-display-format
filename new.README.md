@@ -11,7 +11,7 @@ Output files can be used in display tools such as:
 
 ## Options ##
 
---format= graphml, dot, json
+--format= graphml, dot
 --include= all, ancestors, descendents, branch
 --personid= <id value>
 --iditem=  xref or user specified such as EXID, REFNUM, etc.
@@ -40,13 +40,6 @@ gedcom-display-format.py --format=dot --include=anc --personid=432 --iditem=exid
 
 GraphML: http://graphml.graphdrawing.org
 DOT: https://graphviz.org/doc/info/lang.html
-JSON: https://www.w3schools.com/js/js_json_intro.asp
-JS: see below
-
-## Making Javascript format ##
-
-A Javascript file, for insertion into an html page (etc.) with the use of a src= tag,
-  can be created by making a JSON output file then prepending variable= and appending a semicolon (;).
 
 ## Installation ##
 
