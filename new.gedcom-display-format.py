@@ -37,7 +37,7 @@ def get_program_options():
     arg_help = 'Convert gedcom to network graph format.'
     parser = argparse.ArgumentParser( description=arg_help )
 
-    formats = [results['format'], 'dot', 'json']
+    formats = [results['format'], 'dot']
     arg_help = 'Output format. One of: ' + str(formats) + ', Default: ' + results['format']
     parser.add_argument( '--format', default=formats, choices=formats, type=str, help=arg_help )
 
