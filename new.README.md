@@ -18,8 +18,22 @@ Output files can be used in display tools such as:
 
 ## Usage ##
 
+Minimal usage
 ```
-gedcom-display-format.py gedcom-filename > formatted-file
+gedcom-display-format.py gedcom-filename > file.graphml
+```
+Producing a file for Graphviz
+```
+gedcom-display-format.py --format=dot gedcom-filename > file.dot
+graphviz -Tpng file.dot -o file.png
+```
+Output of the branch containing person with GEDCOM XREF @I15@
+```
+gedcom-display-format.py --include=branch --personid=15 gedcom-filename > file.graphml
+```
+The ancestors of person with EXID of 432
+```
+gedcom-display-format.py --format=dot --include=anc --personid=432 --iditem=exid gedcom-filename > file.dot
 ```
 
 ## Formats ##
