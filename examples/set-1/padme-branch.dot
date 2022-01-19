@@ -1,0 +1,15 @@
+digraph family {
+node [shape=record];
+rankdir=LR;
+
+f1 [label="<h>Anakin|<u>|<w>Padm&#233;"];
+f4 [label="<h>Ruwee|<u>|<w>Jobal"];
+f8 [label="<h>Han|<u>|<w>Lea"];
+i13 [label="<i>Luke"];
+i14 [label="<i>Ben"];
+f1:w -> f4:p;
+i13:i -> f1:p;
+f8:w -> f1:p;
+i14:i -> f8:p;
+
+}
