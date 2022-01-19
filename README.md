@@ -7,16 +7,39 @@ The display may be of limited value for large trees as it takes a long time to a
 
 Output files can be used in display tools such as:
 - Cytoscape: https://cytoscape.org
+- GraphViz: https://graphviz.org
+
+## Options ##
+
+--format= graphml, dot
+--include= all, ancestors, descendents, branch
+--personid= <id value>
+--iditem=  xref or user specified such as EXID, REFNUM, etc.
 
 ## Usage ##
 
+Minimal usage
 ```
-gedcom-display-format.py gedcom-filename > formatted-file
+gedcom-display-format.py gedcom-filename > file.graphml
+```
+Producing a file for Graphviz
+```
+gedcom-display-format.py --format=dot gedcom-filename > file.dot
+graphviz -Tpng file.dot -o file.png
+```
+Output of the branch containing person with GEDCOM XREF @I15@
+```
+gedcom-display-format.py --include=branch --personid=15 gedcom-filename > file.graphml
+```
+The ancestors of person with EXID of 432
+```
+gedcom-display-format.py --format=dot --include=anc --personid=432 --iditem=exid gedcom-filename > file.dot
 ```
 
 ## Formats ##
 
-Currently only produces GraphML ( http://graphml.graphdrawing.org )
+GraphML: http://graphml.graphdrawing.org
+DOT: https://graphviz.org/doc/info/lang.html
 
 ## Installation ##
 
