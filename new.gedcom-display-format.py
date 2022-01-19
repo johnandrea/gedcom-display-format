@@ -79,25 +79,25 @@ def get_name( individual ):
     return result
 
 
-#def find_other_partner( indi, fam ):
-#    result = None
-#
-#    other_partners = dict()
-#    other_partners['husb'] = 'wife'
-#    other_partners['wife'] = 'husb'
-#
-#    other = None
-#    for partner in other_partners:
-#        if partner in data[fkey][fam]:
-#           if indi == data[fkey][fam][partner]:
-#              other = other_partners[partner]
-#              break
-#
-#    if other:
-#       if other in data[fkey][fam]:
-#          result = data[fkey][fam][other]
-#
-#    return result
+def find_other_partner( indi, fam ):
+    result = None
+
+    other_partners = dict()
+    other_partners['husb'] = 'wife'
+    other_partners['wife'] = 'husb'
+
+    other = None
+    for partner in other_partners:
+        if partner in data[fkey][fam]:
+           if indi == data[fkey][fam][partner][0]:
+              other = other_partners[partner]
+              break
+
+    if other:
+       if other in data[fkey][fam]:
+          result = data[fkey][fam][other][0]
+
+    return result
 
 
 def graphml_header():
@@ -235,34 +235,35 @@ def dot_unions( n, indi_nodes, fam_nodes ):
     for indi in the_individuals:
         if 'fams' in data[ikey][indi]:
            for fam in data[ikey][indi]['fams']:
-               # skip if the family was drawn via the other partner
-               if fam in fam_nodes:
-                  # still need to track this partner
-                  if indi not in indi_nodes:
+               if fam in the_families:
+                  # skip if the family was drawn via the other partner
+                  if fam in fam_nodes:
+                     # still need to track this partner
+                     if indi not in indi_nodes:
+                        n += 1
+                        indi_nodes[indi] = n
+                  else:
                      n += 1
-                     indi_nodes[indi] = n
-               else:
-                  n += 1
-                  fam_nodes[fam] = n
-                  fam_tag = make_dot_ftag( n )
+                     fam_nodes[fam] = n
+                     fam_tag = make_dot_ftag( n )
 
-                  names = dict()
-                  for partner in ['wife','husb']:
-                      if partner in data[fkey][fam]:
-                         partner_id = data[fkey][fam][partner][0]
-                         names[partner] = get_name( data[ikey][partner_id] )
-                         n += 1
-                         indi_nodes[indi] = n
+                     names = dict()
+                     for partner in ['wife','husb']:
+                         if partner in data[fkey][fam]:
+                            partner_id = data[fkey][fam][partner][0]
+                            names[partner] = get_name( data[ikey][partner_id] )
+                            n += 1
+                            indi_nodes[indi] = n
 
-                      else:
-                         names[partner] = 'unknown'
+                         else:
+                            names[partner] = 'unknown'
 
-                  out = fam_tag + ' [label="'
-                  out += '<h>' + names['husb']
-                  out += '|<u>|'  # potentially marriage date could go in here
-                  out += '<w>' + names['wife']
-                  out += '"];'
-                  print( out )
+                     out = fam_tag + ' [label="'
+                     out += '<h>' + names['husb']
+                     out += '|<u>|'  # potentially marriage date could go in here
+                     out += '<w>' + names['wife']
+                     out += '"];'
+                     print( out )
 
     return n
 
@@ -272,25 +273,26 @@ def dot_connectors( indi_nodes, fam_nodes ):
     for indi in the_individuals:
         if 'famc' in data[ikey][indi]:
            child_of = data[ikey][indi]['famc'][0]
-           f_link = make_dot_ftag( fam_nodes[child_of] ) + ':p'
+           if child_of in the_families:
+              f_link = make_dot_ftag( fam_nodes[child_of] ) + ':p'
 
-           # the tag for the individual depends on if its in a family or not
-           if 'fams' in data[ikey][indi]:
-              # the connector will go from one of the families for this person
-              fam = data[ikey][indi]['fams'][0]
+              # the tag for the individual depends on if its in a family or not
+              if 'fams' in data[ikey][indi]:
+                 # the connector will go from one of the families for this person
+                 fam = data[ikey][indi]['fams'][0]
 
-              partner_key = 'h'
-              # but see if its the wife side of the structure
-              if 'wife' in data[fkey][fam]:
-                 if indi == data[fkey][fam]['wife'][0]:
-                    partner_key = 'w'
+                 partner_key = 'h'
+                 # but see if its the wife side of the structure
+                 if 'wife' in data[fkey][fam]:
+                    if indi == data[fkey][fam]['wife'][0]:
+                       partner_key = 'w'
 
-              i_link = make_dot_ftag( fam_nodes[fam] ) + ':' + partner_key
+                 i_link = make_dot_ftag( fam_nodes[fam] ) + ':' + partner_key
 
-           else:
-              i_link = make_dot_itag( indi_nodes[indi] ) + ':i'
+              else:
+                 i_link = make_dot_itag( indi_nodes[indi] ) + ':i'
 
-           print( i_link + ' -> ' + f_link + ';' )
+              print( i_link + ' -> ' + f_link + ';' )
 
 
 def find_person( person, item ):
@@ -322,21 +324,52 @@ def find_person( person, item ):
 
 def add_ancestors( indi ):
     global the_individuals
-    print( 'adding anc', indi ) #debug
+    global the_families
+
+    if 'famc' in data[ikey][indi]:
+        fam = data[ikey][indi]['famc'][0]
+        if fam not in the_families:
+           the_families.append( fam )
+        for partner in ['wife','husb']:
+            if partner in data[fkey][fam]:
+               parent_id = data[fkey][fam][partner][0]
+               if parent_id not in the_individuals:
+                  the_individuals.append( parent_id )
+                  add_ancestors( parent_id )
 
 
 def add_descendents( indi ):
     global the_individuals
-    print( 'adding desc', indi ) #debug
+    global the_families
+
+    if 'fams' in data[ikey][indi]:
+       for fam in data[ikey][indi]['fams']:
+           if fam not in the_families:
+              the_families.append( fam )
+           if 'chil' in data[fkey][fam]:
+              for child in data[fkey][fam]['chil']:
+                  if child not in the_individuals:
+                     the_individuals.append( child )
+                     add_descendents( child )
+           # need to also add the partner in this family
+           # so that the family will be displayed
+           # but do not travel down this person's descendents
+           other = find_other_partner( indi, fam )
+           if other is not None:
+              the_individuals.append( other )
 
 
 def get_individuals( who_to_include, person_id, id_item ):
     global the_individuals
+    global the_families
+
     result = True
 
     if who_to_include == 'all':
        for indi in data[ikey]:
            the_individuals.append( indi )
+       for fam in data[fkey]:
+           the_families.append( fam )
 
     else:
        if person_id is None:
@@ -421,12 +454,18 @@ data = readgedcom.read_file( options['infile'] )
 
 # find the people that should be output
 the_individuals = []
+the_families = []
 
 exit_code = 1
 
 if ikey in data:
 
    if get_individuals( options['include'], options['personid'], options['iditem'] ):
+
+      #print( 'individuals', file=sys.stderr ) #debug
+      #for i in the_individuals:
+      #    print( i, get_name( data[ikey][i]) , file=sys.stderr ) #debug
+
       if output_data( options['format'] ):
          exit_code = 0
 
