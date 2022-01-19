@@ -6,7 +6,7 @@ a network visualization too.
 
 This code is released under the MIT License: https://opensource.org/licenses/MIT
 Copyright (c) 2022 John A. Andrea
-v1.0.0
+v2.0.0
 
 No support provided.
 """
@@ -310,7 +310,7 @@ def dot_connectors( indi_nodes, fam_nodes ):
               else:
                  i_link = make_dot_itag( indi_nodes[indi] ) + ':i'
 
-              print( i_link + ' -> ' + f_link + ';' )
+              print( f_link + ' -> ' + i_link + ';' )
 
 
 def find_person( person, item ):
