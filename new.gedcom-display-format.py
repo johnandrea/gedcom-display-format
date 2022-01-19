@@ -41,7 +41,7 @@ def get_program_options():
     arg_help = 'Output format. One of: ' + str(formats) + ', Default: ' + results['format']
     parser.add_argument( '--format', default=formats, choices=formats, type=str, help=arg_help )
 
-    includes = [results['include'], 'ancestors', 'anc', 'descendents', 'desc', 'bowtie', 'bow' ]
+    includes = [results['include'], 'ancestors', 'anc', 'descendents', 'desc', 'branch' ]
     arg_help = 'People to include. Default: ' + results['include']
     arg_help += ' An id for a person is required when not choosing ' + results['include']
     parser.add_argument( '--include', default=results['include'], choices=includes, type=str, help=arg_help )
@@ -406,7 +406,7 @@ def get_individuals( who_to_include, person_id, id_item ):
                 print( 'Output descendents', file=sys.stderr )
                 add_descendents( person_indi )
 
-             elif who_to_include in ['bowtie','bow']:
+             elif who_to_include == 'branch':
                 print( 'Output ancestors and descendents', file=sys.stderr )
                 add_ancestors( person_indi )
                 add_descendents( person_indi )
