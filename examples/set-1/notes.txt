@@ -1,0 +1,12 @@
+Output of the Padme branch using the example skywalker.ged input file.
+
+Produced via:
+
+gedcom-display-format.py --inc=branch --personid=6 skywalker.ged --format=dot >out.dot 2>r1.err
+gedcom-display-format.py --inc=branch --personid=6 skywalker.ged --format=graphml >out.graphml 2>r2.err
+
+dot -Tpng out.dot -o tree.png
+
+then files renamed as appropriate and the png converted to jpg for display here.
+
+The graphml file imported to Cytoscape then the style file imported with the "gedcom" style selected.
