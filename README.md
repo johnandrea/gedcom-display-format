@@ -19,6 +19,7 @@ Type of output file produced. Default is graphml
 
 Which people to include in the output. Default is all
 If choosing anything except "all", the personid option is required to select a person.
+"branch" means both ancestors and descendents of a single person.
 
 --personid= <id value>
   
