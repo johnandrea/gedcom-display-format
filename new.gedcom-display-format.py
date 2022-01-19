@@ -17,6 +17,7 @@ import argparse
 import readgedcom
 
 
+# these colors for GraphML
 NAME_COLOR = 'olive'
 UNION_COLOR = 'lightsalmon'
 PARENT_CONNECT = 'black'
@@ -40,7 +41,7 @@ def get_program_options():
     arg_help = 'Output format. One of: ' + str(formats) + ', Default: ' + results['format']
     parser.add_argument( '--format', default=formats, choices=formats, type=str, help=arg_help )
 
-    includes = [results['include'], 'ancestors', 'anc', 'descendents', 'desc' ]
+    includes = [results['include'], 'ancestors', 'anc', 'descendents', 'desc', 'bowtie', 'bow' ]
     arg_help = 'People to include. Default: ' + results['include']
     arg_help += ' An id for a person is required when not choosing ' + results['include']
     parser.add_argument( '--include', default=results['include'], choices=includes, type=str, help=arg_help )
@@ -69,14 +70,26 @@ def get_program_options():
     return results
 
 
-def get_name( individual ):
-    result = individual['name'][0]['html']
+def get_name( individual, style ):
+    # ouput formats deal with text in different "styles" for non-ascii characters
+    # GraphML can dispay HTML
+    # Dot can display ? fix this
+
+    result = individual['name'][0][style]
     if readgedcom.UNKNOWN_NAME in result:
        result = 'unknown'
     else:
        # remove any suffix after the end slash
        result = re.sub( r'/[^/]*$', '', result ).replace('/','').strip()
     return result
+
+
+def get_name_graphml( individual ):
+    return get_name( individual, 'html' )
+
+
+def get_name_dot( individual ):
+    return get_name( individual, 'html' )  #fix this
 
 
 def find_other_partner( indi, fam ):
@@ -145,7 +158,7 @@ def graphml_node( n, color, name ):
 
 def graphml_names( n, node_match ):
     for indi in data[ikey]:
-        name = get_name( data[ikey][indi] )
+        name = get_name_graphml( data[ikey][indi] )
         node_match[indi] = n
         graphml_node( n, NAME_COLOR, name )
         n += 1
@@ -155,6 +168,7 @@ def graphml_names( n, node_match ):
 def graphml_unions( n, node_match ):
     for fam in data[fkey]:
         node_match[fam] = n
+        # potentially a marriage date could be used as the label
         graphml_node( n, UNION_COLOR, UNION_LABEL )
         n += 1
     return n
@@ -224,7 +238,7 @@ def dot_singles( n, match_nodes ):
            match_nodes[indi] = n
 
            out = make_dot_itag(n) + ' [label="'
-           out += '<i>' + get_name( data[ikey][indi] )
+           out += '<i>' + get_name_dot( data[ikey][indi] )
            out += '"];'
            print( out )
     return n
@@ -251,7 +265,7 @@ def dot_unions( n, indi_nodes, fam_nodes ):
                      for partner in ['wife','husb']:
                          if partner in data[fkey][fam]:
                             partner_id = data[fkey][fam][partner][0]
-                            names[partner] = get_name( data[ikey][partner_id] )
+                            names[partner] = get_name_dot( data[ikey][partner_id] )
                             n += 1
                             indi_nodes[indi] = n
 
@@ -381,7 +395,7 @@ def get_individuals( who_to_include, person_id, id_item ):
 
           if person_indi is not None:
 
-             print( 'Selected person', person_indi, '=', get_name(data[ikey][person_indi]), file=sys.stderr )
+             print( 'Selected person', person_indi, '=', get_name(data[ikey][person_indi], 'html'), file=sys.stderr )
              the_individuals.append( person_indi )
 
              if who_to_include in ['ancestors','anc']:
@@ -390,6 +404,11 @@ def get_individuals( who_to_include, person_id, id_item ):
 
              elif who_to_include in ['descendents','desc']:
                 print( 'Output descendents', file=sys.stderr )
+                add_descendents( person_indi )
+
+             elif who_to_include in ['bowtie','bow']:
+                print( 'Output ancestors and descendents', file=sys.stderr )
+                add_ancestors( person_indi )
                 add_descendents( person_indi )
 
              else:
@@ -464,7 +483,7 @@ if ikey in data:
 
       #print( 'individuals', file=sys.stderr ) #debug
       #for i in the_individuals:
-      #    print( i, get_name( data[ikey][i]) , file=sys.stderr ) #debug
+      #    print( i, get_name( data[ikey][i], 'html') , file=sys.stderr ) #debug
 
       if output_data( options['format'] ):
          exit_code = 0
