@@ -12,18 +12,22 @@ Output files can be used in display tools such as:
 ## Options ##
 
 --format= graphml or dot 
+
 Type of output file produced. Default is graphml
 
 --include= all, ancestors, descendents, branch
+
 Which people to include in the output. Default is all
 If choosing anything except "all", the personid option is required to select a person.
 
 --personid= <id value>
+  
 The id of the person to select for output. Used in combination with the iditem option.
 By default this is the the individual xref in the gedcom file and so may be given as for example
 as @i42@ or i42 or just 42.
 
 --iditem=  xref or user specified such as EXID, REFNUM, etc.
+  
 The tag in the gedcom file used to match the specified person. Default is xref which is the gedcom individual identifier.
 
 
