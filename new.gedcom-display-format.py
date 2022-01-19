@@ -72,8 +72,8 @@ def get_program_options():
 
 def get_name( individual, style ):
     # ouput formats deal with text in different "styles" for non-ascii characters
-    # GraphML can dispay HTML
-    # Dot can display ? fix this
+    # GraphML can dispay HTML encodings.
+    # Dot can also display HTML.
 
     result = individual['name'][0][style]
     if readgedcom.UNKNOWN_NAME in result:
@@ -89,7 +89,7 @@ def get_name_graphml( individual ):
 
 
 def get_name_dot( individual ):
-    return get_name( individual, 'html' )  #fix this
+    return get_name( individual, 'html' )
 
 
 def find_other_partner( indi, fam ):
@@ -157,7 +157,7 @@ def graphml_node( n, color, name ):
 
 
 def graphml_names( n, node_match ):
-    for indi in data[ikey]:
+    for indi in the_individuals:
         name = get_name_graphml( data[ikey][indi] )
         node_match[indi] = n
         graphml_node( n, NAME_COLOR, name )
@@ -166,7 +166,7 @@ def graphml_names( n, node_match ):
 
 
 def graphml_unions( n, node_match ):
-    for fam in data[fkey]:
+    for fam in the_families:
         node_match[fam] = n
         # potentially a marriage date could be used as the label
         graphml_node( n, UNION_COLOR, UNION_LABEL )
@@ -185,20 +185,21 @@ def graphml_edge( n, s, t, color ):
 
 
 def graphml_connectors( indi_match, fam_match ):
-    # only the children get a colored connector,
-    # the parents use the default
     n = 0
-    for fam in data[fkey]:
+    for fam in the_families:
         target = fam_match[fam]
         for child in data[fkey][fam]['chil']:
-            source = indi_match[child]
-            graphml_edge( n, source, target, CHILD_CONNECT )
-            n += 1
+            if child in the_individuals:
+               source = indi_match[child]
+               n += 1
+               graphml_edge( n, source, target, CHILD_CONNECT )
         for parent in ['husb','wife']:
             if parent in data[fkey][fam]:
-               source = indi_match[data[fkey][fam][parent][0]]
-               graphml_edge( n, source, target, PARENT_CONNECT )
-               n += 1
+               parent_id = data[fkey][fam][parent][0]
+               if parent_id in the_individuals:
+                  source = indi_match[parent_id]
+                  n += 1
+                  graphml_edge( n, source, target, PARENT_CONNECT )
 
 
 def dot_header():
@@ -395,7 +396,7 @@ def get_individuals( who_to_include, person_id, id_item ):
 
           if person_indi is not None:
 
-             print( 'Selected person', person_indi, '=', get_name(data[ikey][person_indi], 'html'), file=sys.stderr )
+             print( 'Selected person', person_indi, '=', get_name(data[ikey][person_indi], 'display'), file=sys.stderr )
              the_individuals.append( person_indi )
 
              if who_to_include in ['ancestors','anc']:
@@ -480,11 +481,6 @@ exit_code = 1
 if ikey in data:
 
    if get_individuals( options['include'], options['personid'], options['iditem'] ):
-
-      #print( 'individuals', file=sys.stderr ) #debug
-      #for i in the_individuals:
-      #    print( i, get_name( data[ikey][i], 'html') , file=sys.stderr ) #debug
-
       if output_data( options['format'] ):
          exit_code = 0
 
