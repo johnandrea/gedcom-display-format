@@ -6,7 +6,7 @@ a network visualization too.
 
 This code is released under the MIT License: https://opensource.org/licenses/MIT
 Copyright (c) 2022 John A. Andrea
-v2.0.0
+v2.1.0
 
 No support provided.
 """
@@ -14,6 +14,7 @@ No support provided.
 import sys
 import re
 import argparse
+import json
 import readgedcom
 
 
@@ -37,11 +38,11 @@ def get_program_options():
     arg_help = 'Convert gedcom to network graph format.'
     parser = argparse.ArgumentParser( description=arg_help )
 
-    formats = [results['format'], 'dot']
+    formats = [results['format'], 'dot', 'json']
     arg_help = 'Output format. One of: ' + str(formats) + ', Default: ' + results['format']
     parser.add_argument( '--format', default=formats, choices=formats, type=str, help=arg_help )
 
-    includes = [results['include'], 'ancestors', 'anc', 'descendents', 'desc', 'branch' ]
+    includes = [results['include'], 'ancestors', 'anc', 'descendents', 'desc', 'branch', 'br' ]
     arg_help = 'People to include. Default: ' + results['include']
     arg_help += ' An id for a person is required when not choosing ' + results['include']
     parser.add_argument( '--include', default=results['include'], choices=includes, type=str, help=arg_help )
@@ -67,29 +68,46 @@ def get_program_options():
     results['iditem'] = args.iditem.lower()
     results['infile'] = args.infile.name
 
+    # change to full words
+    key = 'include'
+    if results[key] in ['anc']:
+       results[key] = 'ancestors'
+    if results[key] in ['desc']:
+       results[key] = 'descendents'
+    if results[key] in ['br']:
+       results[key] = 'branch'
+
     return results
 
 
-def get_name( individual, style ):
+def get_name( indi, style ):
     # ouput formats deal with text in different "styles" for non-ascii characters
     # GraphML can dispay HTML encodings.
     # Dot can also display HTML.
 
-    result = individual['name'][0][style]
-    if readgedcom.UNKNOWN_NAME in result:
-       result = 'unknown'
-    else:
-       # remove any suffix after the end slash
-       result = re.sub( r'/[^/]*$', '', result ).replace('/','').strip()
+    result = 'none'
+
+    if indi is not None:
+       result = data[ikey][indi]['name'][0][style]
+       if readgedcom.UNKNOWN_NAME in result:
+          result = 'unknown'
+       else:
+          # remove any suffix after the end slash
+          result = re.sub( r'/[^/]*$', '', result ).replace('/','').strip()
+
     return result
 
 
-def get_name_graphml( individual ):
-    return get_name( individual, 'html' )
+def get_name_graphml( indi ):
+    return get_name( indi, 'html' )
 
 
-def get_name_dot( individual ):
-    return get_name( individual, 'html' )
+def get_name_dot( indi ):
+    return get_name( indi, 'html' )
+
+
+def get_name_json( indi ):
+    return get_name( indi, 'html' )
 
 
 def find_other_partner( indi, fam ):
@@ -159,7 +177,7 @@ def graphml_node( n, color, name ):
 
 def graphml_names( n, node_match ):
     for indi in the_individuals:
-        name = get_name_graphml( data[ikey][indi] )
+        name = get_name_graphml( indi )
         node_match[indi] = n
         graphml_node( n, NAME_COLOR, name )
         n += 1
@@ -214,14 +232,6 @@ def dot_setup():
     print( 'rankdir=LR;' )
 
 
-def begin_dot():
-    print( '' )
-
-
-def end_dot():
-    print( '' )
-
-
 def dot_trailer():
     print( '}' )
 
@@ -234,54 +244,59 @@ def make_dot_ftag( n ):
     return 'f' + str( n )
 
 
-def dot_singles( n, match_nodes ):
-    # people with no partnerships
-    for indi in the_individuals:
-        if 'fams' not in data[ikey][indi]:
-           n += 1
-           match_nodes[indi] = n
+def dot_families( n, indi_nodes, fam_nodes ):
+    for fam in the_families:
+        if fam not in fam_nodes:
 
-           out = make_dot_itag(n) + ' [label="'
-           out += '<i>' + get_name_dot( data[ikey][indi] )
+           n += 1
+           fam_tag = make_dot_ftag( n )
+
+           # 'u' matches center of family structure
+           fam_nodes[fam] = { 'tag':fam_tag, 'key':'u' }
+
+           names = dict()
+           names['wife'] = '?'
+           names['husb'] = '?'
+
+           for partner in names:
+               if partner in data[fkey][fam]:
+                  person_id = data[fkey][fam][partner][0]
+                  # first char of partner matches 'h' and 'w' in structure
+                  indi_nodes[person_id] = { 'tag':fam_tag, 'key':partner[0:1] }
+                  names[partner] = get_name_dot( person_id )
+
+           out = fam_tag + ' [label="'
+           out += '<h>' + names['husb']
+           out += '|<u>|'  # potentially marriage date could go in here
+           out += '<w>' + names['wife']
            out += '"];'
            print( out )
+
     return n
 
 
-def dot_unions( n, indi_nodes, fam_nodes ):
-    # draw the partnerships in which each individual exists
+def dot_not_families( n, indi_nodes ):
+    # not a parent or spouse
     for indi in the_individuals:
-        if 'fams' in data[ikey][indi]:
-           for fam in data[ikey][indi]['fams']:
-               if fam in the_families:
-                  # skip if the family was drawn via the other partner
-                  if fam in fam_nodes:
-                     # still need to track this partner
-                     if indi not in indi_nodes:
-                        n += 1
-                        indi_nodes[indi] = n
-                  else:
-                     n += 1
-                     fam_nodes[fam] = n
-                     fam_tag = make_dot_ftag( n )
+        if indi not in indi_nodes:
+           # and the person is not in any of the families which are selected
+           in_a_fam = False
+           item = 'fams'
+           if item in data[ikey][indi]:
+              for fam in data[ikey][indi][item]:
+                  if fam in the_families:
+                     in_a_fam = True
+                     break
+           if not in_a_fam:
+              n += 1
+              tag = make_dot_itag(n)
+              # 'i' matches structure
+              indi_nodes[indi] = { 'tag':tag, 'key':'i' }
 
-                     names = dict()
-                     for partner in ['wife','husb']:
-                         if partner in data[fkey][fam]:
-                            partner_id = data[fkey][fam][partner][0]
-                            names[partner] = get_name_dot( data[ikey][partner_id] )
-                            n += 1
-                            indi_nodes[indi] = n
-
-                         else:
-                            names[partner] = 'unknown'
-
-                     out = fam_tag + ' [label="'
-                     out += '<h>' + names['husb']
-                     out += '|<u>|'  # potentially marriage date could go in here
-                     out += '<w>' + names['wife']
-                     out += '"];'
-                     print( out )
+              out = tag + ' [label="'
+              out += '<i>' + get_name_dot( indi )
+              out += '"];'
+              print( out )
 
     return n
 
@@ -292,28 +307,14 @@ def dot_connectors( indi_nodes, fam_nodes ):
         if 'famc' in data[ikey][indi]:
            child_of = data[ikey][indi]['famc'][0]
            if child_of in the_families:
-              f_link = make_dot_ftag( fam_nodes[child_of] ) + ':p'
-
-              # the tag for the individual depends on if its in a family or not
-              if 'fams' in data[ikey][indi]:
-                 # the connector will go from one of the families for this person
-                 fam = data[ikey][indi]['fams'][0]
-
-                 partner_key = 'h'
-                 # but see if its the wife side of the structure
-                 if 'wife' in data[fkey][fam]:
-                    if indi == data[fkey][fam]['wife'][0]:
-                       partner_key = 'w'
-
-                 i_link = make_dot_ftag( fam_nodes[fam] ) + ':' + partner_key
-
-              else:
-                 i_link = make_dot_itag( indi_nodes[indi] ) + ':i'
+              f_link = fam_nodes[child_of]['tag'] +':'+ fam_nodes[child_of]['key']
+              i_link = indi_nodes[indi]['tag'] +':'+ indi_nodes[indi]['key']
 
               print( f_link + ' -> ' + i_link + ';' )
 
 
 def find_person( person, item ):
+    # it is possible that the selected person is not found
     result = None
 
     if item == 'xref':
@@ -380,6 +381,7 @@ def add_descendents( indi ):
 def get_individuals( who_to_include, person_id, id_item ):
     global the_individuals
     global the_families
+    global the_person
 
     result = True
 
@@ -390,40 +392,100 @@ def get_individuals( who_to_include, person_id, id_item ):
            the_families.append( fam )
 
     else:
-       if person_id is None:
-          print( 'The id of a person is required for branch selection.', file=sys.stderr )
-          result = False
-       else:
+       # the existance of a personid value should already have been checked
 
-          person_indi = find_person( person_id, id_item )
+       the_person = find_person( person_id, id_item )
 
-          if person_indi is not None:
+       if the_person is not None:
 
-             print( 'Selected person', person_indi, '=', get_name(data[ikey][person_indi], 'display'), file=sys.stderr )
-             the_individuals.append( person_indi )
+          print( 'Selected person', the_person, '=', get_name(the_person, 'display'), file=sys.stderr )
+          the_individuals.append( the_person )
 
-             if who_to_include in ['ancestors','anc']:
-                print( 'Output ancestors', file=sys.stderr )
-                add_ancestors( person_indi )
+          if who_to_include == 'ancestors':
+             print( 'Output ancestors', file=sys.stderr )
+             add_ancestors( the_person )
 
-             elif who_to_include in ['descendents','desc']:
-                print( 'Output descendents', file=sys.stderr )
-                add_descendents( person_indi )
+          elif who_to_include == 'descendents':
+             print( 'Output descendents', file=sys.stderr )
+             add_descendents( the_person )
 
-             elif who_to_include == 'branch':
-                print( 'Output ancestors and descendents', file=sys.stderr )
-                add_ancestors( person_indi )
-                add_descendents( person_indi )
-
-             else:
-                print( 'Unknown option for include:', who_to_include, file=sys.stderr )
-                result = False
+          elif who_to_include == 'branch':
+             print( 'Output ancestors and descendents', file=sys.stderr )
+             add_ancestors( the_person )
+             add_descendents( the_person )
 
           else:
-             print( 'Did not locate specified person', person_id, 'in', id_item, file=sys.stderr )
+             # unlikley to get here, but just in case i've made a typo
+             print( 'Unknown option for include:', who_to_include, file=sys.stderr )
              result = False
 
+       else:
+          print( 'Did not locate specified person', person_id, 'in', id_item, file=sys.stderr )
+          result = False
+
     return result
+
+
+def json_ancestors( indi ):
+    results = dict()
+    if indi in the_individuals:
+       results[indi] = dict()
+       results[indi]['name'] = get_name_json( indi )
+       # they get a parent list, but it might be empty
+       results[indi]['child_of'] = dict()
+       if 'famc' in data[ikey][indi]:
+          fam = data[ikey][indi]['famc'][0]
+
+          results[indi]['child_of']['id'] = fam
+          results[indi]['child_of']['parents'] = []
+          # potentially add a marriage date here too
+
+          for parent in ['wife','husb']:
+              if parent in data[fkey][fam]:
+                 parent_id = data[fkey][fam][parent][0]
+                 results[indi]['child_of']['parents'].append( json_ancestors( parent_id ) )
+
+    return results
+
+
+def json_descendents( indi ):
+    results = dict()
+    if indi in the_individuals:
+       results[indi] = dict()
+       results[indi]['name'] = get_name_json( indi )
+       # they get a family, but it might be empty
+       results[indi]['families'] = []
+       if 'fams' in data[ikey][indi]:
+          for fam in data[ikey][indi]['fams']:
+              other = find_other_partner( indi, fam )
+
+              fam_info = dict()
+              # potentially add a marriage date here too
+              fam_info['id'] = fam
+              fam_info['with_id'] = other
+              fam_info['with_name'] = get_name_json( other )
+              # they get a child list, but it might be empty
+              fam_info['children'] = []
+
+              if 'chil' in data[fkey][fam]:
+                 for child in data[fkey][fam]['chil']:
+                     fam_info['children'].append( json_descendents( child ) )
+
+              results[indi]['families'].append( fam_info )
+    return results
+
+
+def output_json():
+    output = dict()
+
+    # the contents are slightly different depending on the direction
+    if options['include'] == 'ancestors':
+       output = json_ancestors( the_person )
+
+    else:
+       output = json_descendents( the_person )
+
+    json.dump( output, indent=1, fp=sys.stdout )
 
 
 def output_data( out_format ):
@@ -452,18 +514,51 @@ def output_data( out_format ):
     elif out_format == 'dot':
        dot_header()
        dot_setup()
-       begin_dot()
 
-       n_nodes = dot_unions( n_nodes, indi_nodes, fam_nodes )
-       n_nodes = dot_singles( n_nodes, indi_nodes )
+       n_nodes = dot_families( n_nodes, indi_nodes, fam_nodes )
+       n_nodes = dot_not_families( n_nodes, indi_nodes )
        dot_connectors( indi_nodes, fam_nodes )
 
-       end_dot()
        dot_trailer()
 
+    elif out_format == 'json':
+       output_json()
+
     else:
+       # unlikely to get here, but just in case i've made a typo
        print( 'Unknown format', out_format, file=sys.stderr )
        result = False
+
+    return result
+
+
+def data_ok():
+    result = False
+    # it is possible to have a tree with no families,
+    # but individuals are required
+    if ikey in data:
+       if len( data[ikey] ) > 0:
+          result = True
+       else:
+          print( 'Data is empty', file=sys.stderr )
+    else:
+       print( 'Data not correct format.', file=sys.stderr )
+    return result
+
+
+def options_ok( program_options ):
+    result = True
+
+    if program_options['format'] == 'json':
+       exclude = ['all','branch']
+       if program_options['include'] in exclude:
+          print( 'JSON format is not compatible with including one of', exclude, file=sys.stderr )
+          result = False
+
+    if program_options['include'] != 'all':
+       if program_options['personid'] is None:
+          print( 'include other than "all" requires a personid', file=sys.stderr )
+          result = False
 
     return result
 
@@ -478,16 +573,14 @@ data = readgedcom.read_file( options['infile'] )
 # find the people that should be output
 the_individuals = []
 the_families = []
+the_person = None
 
 exit_code = 1
 
-if ikey in data:
-
-   if get_individuals( options['include'], options['personid'], options['iditem'] ):
-      if output_data( options['format'] ):
-         exit_code = 0
-
-else:
-   print( 'Data not correct format.', file=sys.stderr )
+if data_ok():
+   if options_ok( options ):
+      if get_individuals( options['include'], options['personid'], options['iditem'] ):
+         if output_data( options['format'] ):
+            exit_code = 0
 
 sys.exit( exit_code )
