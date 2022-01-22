@@ -1,0 +1,40 @@
+{
+ "i6": {
+  "name": "Padm&#233;",
+  "families": [
+   {
+    "id": "f3",
+    "with_id": "i1",
+    "with_name": "Anakin",
+    "children": [
+     {
+      "i7": {
+       "name": "Luke",
+       "families": []
+      }
+     },
+     {
+      "i8": {
+       "name": "Lea",
+       "families": [
+        {
+         "id": "f4",
+         "with_id": "i9",
+         "with_name": "Han",
+         "children": [
+          {
+           "i10": {
+            "name": "Ben",
+            "families": []
+           }
+          }
+         ]
+        }
+       ]
+      }
+     }
+    ]
+   }
+  ]
+ }
+}
