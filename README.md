@@ -13,13 +13,13 @@ Output files can be used in display tools such as:
 
 --format= graphml or dot or json
 
-Type of output file produced. Default is graphml
-JSON is not available for including "all" or "branch".
+Type of output file produced. Default is graphml.
+  JSON is not available for including "all" or "branch".
 
 --include= all, ancestors, descendents, branch
 
-Which people to include in the output. Default is all
-If choosing anything except "all", the personid option is required to select a person.
+Which people to include in the output. Default is all.
+  If choosing anything except "all", the personid option is required to select a person.
 "branch" means both ancestors and descendents of a single person.
 
 --personid= <id value>
