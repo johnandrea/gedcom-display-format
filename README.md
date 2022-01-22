@@ -74,4 +74,4 @@ DOT: https://graphviz.org/doc/info/lang.html
 ## Limitations ##
   
 - A loop in a family might be trouble
-- Might not escape names with quotes and non-Latin characters
+- Might not escape all non-Latin characters
