@@ -6,7 +6,7 @@ a network visualization too.
 
 This code is released under the MIT License: https://opensource.org/licenses/MIT
 Copyright (c) 2022 John A. Andrea
-v2.1.0
+v2.1.1
 
 No support provided.
 """
@@ -94,6 +94,10 @@ def get_name( indi, style ):
        else:
           # remove any suffix after the end slash
           result = re.sub( r'/[^/]*$', '', result ).replace('/','').strip()
+
+          if style == 'html':
+             # escape quotes
+             result = result.replace('"','&quot;').replace("'","&rsquo;")
 
     return result
 
