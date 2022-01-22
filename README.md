@@ -11,9 +11,10 @@ Output files can be used in display tools such as:
 
 ## Options ##
 
---format= graphml or dot 
+--format= graphml or dot or json
 
 Type of output file produced. Default is graphml
+JSON is not available for including "all" or "branch".
 
 --include= all, ancestors, descendents, branch
 
@@ -67,3 +68,8 @@ DOT: https://graphviz.org/doc/info/lang.html
 - Requires python 3.6+
 - Copy Python file and supporting style file(s).
 - also requires gedcom library [readgedcom.py](https://github.com/johnandrea/readgedcom)
+
+## Limitations ##
+  
+- A loop in a family might be trouble
+- Might not escape names with quotes and non-Latin characters
