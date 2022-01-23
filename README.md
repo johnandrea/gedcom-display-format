@@ -34,6 +34,10 @@ as @i42@ or I42 or just 42.
   
 The tag in the gedcom file used to match the specified person. Default is xref which is the gedcom individual identifier.
   When using a non-xref tag, the given personid value must match exactly the value in the gedcom file.
+  
+--dates
+  
+Include birth and death years with the names.
 
 
 ## Usage ##
