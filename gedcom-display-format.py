@@ -6,7 +6,7 @@ a network visualization too.
 
 This code is released under the MIT License: https://opensource.org/licenses/MIT
 Copyright (c) 2022 John A. Andrea
-v2.1.1
+v2.2.0
 
 No support provided.
 """
@@ -34,6 +34,7 @@ def get_program_options():
     results['include'] = 'all'
     results['personid'] = None
     results['iditem'] = 'xref'
+    results['dates'] = False
 
     arg_help = 'Convert gedcom to network graph format.'
     parser = argparse.ArgumentParser( description=arg_help )
@@ -58,6 +59,9 @@ def get_program_options():
     arg_help += ' Othewise choose "exid", "refnum", etc.'
     parser.add_argument( '--iditem', default=results['iditem'], type=str, help=arg_help )
 
+    arg_help = 'Show dates along with the names.'
+    parser.add_argument( '--dates', default=False, action='store_true', help=arg_help )
+
     parser.add_argument('infile', type=argparse.FileType('r') )
 
     args = parser.parse_args()
@@ -66,6 +70,7 @@ def get_program_options():
     results['include'] = args.include.lower()
     results['personid'] = args.personid
     results['iditem'] = args.iditem.lower()
+    results['dates'] = args.dates
     results['infile'] = args.infile.name
 
     # change to full words
@@ -80,7 +85,35 @@ def get_program_options():
     return results
 
 
-def get_name( indi, style ):
+def get_indi_years( indi ):
+    # return ( birth - death ) or (birth-) or (-death)
+    # but None if both dates are empty
+
+    def get_indi_year( indi_data, tag ):
+        # "best" year for birth, death, ...
+        # or an empty string
+        result = ''
+
+        best = 0
+        if readgedcom.BEST_EVENT_KEY in indi_data:
+           if tag in indi_data[readgedcom.BEST_EVENT_KEY]:
+              best = indi_data[readgedcom.BEST_EVENT_KEY][tag]
+        if tag in indi_data:
+           if indi_data[tag][best]['date']['is_known']:
+              result = str( indi_data[tag][best]['date']['min']['year'] )
+        return result
+
+    result = None
+
+    birth = get_indi_year( data[ikey][indi], 'birt' ).strip()
+    death = get_indi_year( data[ikey][indi], 'deat' ).strip()
+    if birth or death:
+       result = '(' + birth +'-'+ death + ')'
+
+    return result
+
+
+def get_name( indi, style, line_break=' ' ):
     # ouput formats deal with text in different "styles" for non-ascii characters
     # GraphML can dispay HTML encodings.
     # Dot can also display HTML.
@@ -90,6 +123,7 @@ def get_name( indi, style ):
     if indi is not None:
        result = data[ikey][indi]['name'][0][style]
        if readgedcom.UNKNOWN_NAME in result:
+          # change to word with no special characters
           result = 'unknown'
        else:
           # remove any suffix after the end slash
@@ -99,19 +133,27 @@ def get_name( indi, style ):
              # escape quotes
              result = result.replace('"','&quot;').replace("'","&rsquo;")
 
+          if options['dates']:
+             dates = get_indi_years( indi )
+             if dates:
+                result += line_break + dates
+
     return result
 
 
 def get_name_graphml( indi ):
-    return get_name( indi, 'html' )
+    # not s string to repersent newline (\\n) but an actual newline (\n)
+    return get_name( indi, 'html', '\n' )
 
 
 def get_name_dot( indi ):
-    return get_name( indi, 'html' )
+    return get_name( indi, 'html', '\\n' )
 
 
 def get_name_json( indi ):
-    return get_name( indi, 'html' )
+    # dates in the json ought to be handled as a separate key,
+    # but that breaks this flow
+    return get_name( indi, 'html', ' ' )
 
 
 def find_other_partner( indi, fam ):
