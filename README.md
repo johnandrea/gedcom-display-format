@@ -24,6 +24,11 @@ Which people to include in the output. Default is all.
 If choosing anything except "all", the personid option is required to select a person.
 "branch" means both ancestors and descendents of a single person.
 
+--reverse
+
+In dot format output, reverse the direction of the parent to child links in order to
+flip the orientation of the whole graph.
+
 --personid= <id value>
   
 The id of the person to select for output. Used in combination with the iditem option.
@@ -33,11 +38,17 @@ as @i42@ or I42 or just 42.
 --iditem=  xref or user specified such as EXID, REFNUM, etc.
   
 The tag in the gedcom file used to match the specified person. Default is xref which is the gedcom individual identifier.
-  When using a non-xref tag, the given personid value must match exactly the value in the gedcom file.
+  When using a non-xref tag, the given personid value must match exactly the value in the gedcom file. The match makes
+  use of the readgedcom's find_individuals so an id name such as birth.date mau be used or for a custom event such as
+  event.extraref If more than one match is found the first (unordered) one is taken.
   
 --dates
   
 Include birth and death years with the names.
+  
+--libpath=directory-containing-readgedcom
+  
+Path of the directory containing the required readgedcom library file. Default os the current directory (.).
 
 
 ## Usage ##
@@ -79,3 +90,8 @@ DOT: https://graphviz.org/doc/info/lang.html
   
 - A loop in a family might be trouble
 - Might not escape all non-Latin characters
+  
+## Future ##
+  
+- complain or abort if more than one individual is found via personid/iditem
+- allow multiple personid/iditem to help select the desired person
