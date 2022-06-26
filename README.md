@@ -39,7 +39,7 @@ as @i42@ or I42 or just 42.
   
 The tag in the gedcom file used to match the specified person. Default is xref which is the gedcom individual identifier.
   When using a non-xref tag, the given personid value must match exactly the value in the gedcom file. The match makes
-  use of the readgedcom's find_individuals so an id name such as birth.date mau be used or for a custom event such as
+  use of the readgedcom function find_individuals so an id name such as birth.date may be used or for a custom event such as
   event.extraref If more than one match is found the first (unordered) one is taken.
   
 --dates
