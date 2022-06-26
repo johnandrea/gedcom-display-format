@@ -6,7 +6,7 @@ a network visualization too.
 
 This code is released under the MIT License: https://opensource.org/licenses/MIT
 Copyright (c) 2022 John A. Andrea
-v2.2.0
+v2.3.0
 
 No support provided.
 """
@@ -15,7 +15,8 @@ import sys
 import re
 import argparse
 import json
-import readgedcom
+import importlib.util
+import os
 
 
 # these colors for GraphML
@@ -24,6 +25,35 @@ UNION_COLOR = 'lightsalmon'
 PARENT_CONNECT = 'black'
 CHILD_CONNECT = 'orange'
 UNION_LABEL = '@'
+
+
+
+def load_my_module( module_name, relative_path ):
+    """
+    Load a module in my own single .py file. Requires Python 3.6+
+    Give the name of the module, not the file name.
+    Give the path to the module relative to the calling program.
+    Requires:
+        import importlib.util
+        import os
+    Use like this:
+        readgedcom = load_my_module( 'readgedcom', '../libs' )
+        data = readgedcom.read_file( input-file )
+    """
+    assert isinstance( module_name, str ), 'Non-string passed as module name'
+    assert isinstance( relative_path, str ), 'Non-string passed as relative path'
+
+    file_path = os.path.dirname( os.path.realpath( __file__ ) )
+    file_path += os.path.sep + relative_path
+    file_path += os.path.sep + module_name + '.py'
+
+    assert os.path.isfile( file_path ), 'Module file not found at ' + str(file_path)
+
+    module_spec = importlib.util.spec_from_file_location( module_name, file_path )
+    my_module = importlib.util.module_from_spec( module_spec )
+    module_spec.loader.exec_module( my_module )
+
+    return my_module
 
 
 def get_program_options():
@@ -35,6 +65,8 @@ def get_program_options():
     results['personid'] = None
     results['iditem'] = 'xref'
     results['dates'] = False
+    results['reverse'] = False
+    results['libpath'] = '.'
 
     arg_help = 'Convert gedcom to network graph format.'
     parser = argparse.ArgumentParser( description=arg_help )
@@ -60,7 +92,15 @@ def get_program_options():
     parser.add_argument( '--iditem', default=results['iditem'], type=str, help=arg_help )
 
     arg_help = 'Show dates along with the names.'
-    parser.add_argument( '--dates', default=False, action='store_true', help=arg_help )
+    parser.add_argument( '--dates', default=results['dates'], action='store_true', help=arg_help )
+
+    # in dot files, change direction of the arrows
+    arg_help = 'For dot file output, reverse the order of the links.'
+    parser.add_argument( '--reverse', default=results['reverse'], action='store_true', help=arg_help )
+
+    # maybe this should be changed to have a type which better matched a directory
+    arg_help = 'Location of the gedcom library. Default is current directory.'
+    parser.add_argument( '--libpath', default=results['libpath'], type=str, help=arg_help )
 
     parser.add_argument('infile', type=argparse.FileType('r') )
 
@@ -72,6 +112,8 @@ def get_program_options():
     results['iditem'] = args.iditem.lower()
     results['dates'] = args.dates
     results['infile'] = args.infile.name
+    results['reverse'] = args.reverse
+    results['libpath'] = args.libpath
 
     # change to full words
     key = 'include'
@@ -347,7 +389,7 @@ def dot_not_families( n, indi_nodes ):
     return n
 
 
-def dot_connectors( indi_nodes, fam_nodes ):
+def dot_connectors( indi_nodes, fam_nodes, reverse_links ):
     # connections from people to their parent unions
     for indi in the_individuals:
         if 'famc' in data[ikey][indi]:
@@ -356,7 +398,10 @@ def dot_connectors( indi_nodes, fam_nodes ):
               f_link = fam_nodes[child_of]['tag'] +':'+ fam_nodes[child_of]['key']
               i_link = indi_nodes[indi]['tag'] +':'+ indi_nodes[indi]['key']
 
-              print( f_link + ' -> ' + i_link + ';' )
+              if reverse_links:
+                 print( i_link + ' -> ' + f_link + ';' )
+              else:
+                 print( f_link + ' -> ' + i_link + ';' )
 
 
 def find_person( person, item ):
@@ -378,11 +423,10 @@ def find_person( person, item ):
               break
 
     else:
-       for indi in data[ikey]:
-           if item in data[ikey][indi]:
-              if person == data[ikey][indi][item]:
-                 result = indi
-                 break
+       found = readgedcom.find_individuals( data, item, person )
+       if found:
+          # just take the first one
+          result = found[0]
 
     return result
 
@@ -534,7 +578,7 @@ def output_json():
     json.dump( output, indent=1, fp=sys.stdout )
 
 
-def output_data( out_format ):
+def output_data( out_format, reverse_links ):
     result = True
 
     # put each person into a node
@@ -563,7 +607,7 @@ def output_data( out_format ):
 
        n_nodes = dot_families( n_nodes, indi_nodes, fam_nodes )
        n_nodes = dot_not_families( n_nodes, indi_nodes )
-       dot_connectors( indi_nodes, fam_nodes )
+       dot_connectors( indi_nodes, fam_nodes, reverse_links )
 
        dot_trailer()
 
@@ -611,6 +655,12 @@ def options_ok( program_options ):
 
 options = get_program_options()
 
+if not os.path.isdir( options['libpath'] ):
+   print( '', file=sys.stderr )
+   sys.exit( 1 )
+
+readgedcom = load_my_module( 'readgedcom', options['libpath'] )
+
 ikey = readgedcom.PARSED_INDI
 fkey = readgedcom.PARSED_FAM
 
@@ -626,7 +676,7 @@ exit_code = 1
 if data_ok():
    if options_ok( options ):
       if get_individuals( options['include'], options['personid'], options['iditem'] ):
-         if output_data( options['format'] ):
+         if output_data( options['format'], options['reverse'] ):
             exit_code = 0
 
 sys.exit( exit_code )
