@@ -27,7 +27,7 @@ UNION_LABEL = '@'
 
 
 def show_version():
-    print( '2.3.2' )
+    print( '2.3.3' )
 
 
 def load_my_module( module_name, relative_path ):
@@ -475,7 +475,7 @@ def add_descendents( indi ):
               the_individuals.append( other )
 
 
-def get_individuals( who_to_include, person_id, id_item ):
+def get_individuals( who_to_include, the_person ):
     global the_individuals
     global the_families
     global the_person
@@ -491,33 +491,25 @@ def get_individuals( who_to_include, person_id, id_item ):
     else:
        # the existance of a personid value should already have been checked
 
-       the_person = find_person( person_id, id_item )
+       print( 'Selected person', the_person, '=', get_name(the_person, 'display'), file=sys.stderr )
+       the_individuals.append( the_person )
 
-       if the_person is not None:
+       if who_to_include == 'ancestors':
+          print( 'Output ancestors', file=sys.stderr )
+          add_ancestors( the_person )
 
-          print( 'Selected person', the_person, '=', get_name(the_person, 'display'), file=sys.stderr )
-          the_individuals.append( the_person )
+       elif who_to_include == 'descendents':
+          print( 'Output descendents', file=sys.stderr )
+          add_descendents( the_person )
 
-          if who_to_include == 'ancestors':
-             print( 'Output ancestors', file=sys.stderr )
-             add_ancestors( the_person )
-
-          elif who_to_include == 'descendents':
-             print( 'Output descendents', file=sys.stderr )
-             add_descendents( the_person )
-
-          elif who_to_include == 'branch':
-             print( 'Output ancestors and descendents', file=sys.stderr )
-             add_ancestors( the_person )
-             add_descendents( the_person )
-
-          else:
-             # unlikley to get here, but just in case i've made a typo
-             print( 'Unknown option for include:', who_to_include, file=sys.stderr )
-             result = False
+       elif who_to_include == 'branch':
+          print( 'Output ancestors and descendents', file=sys.stderr )
+          add_ancestors( the_person )
+          add_descendents( the_person )
 
        else:
-          print( 'Did not locate specified person', person_id, 'in', id_item, file=sys.stderr )
+          # unlikley to get here, but just in case i've made a typo
+          print( 'Unknown option for include:', who_to_include, file=sys.stderr )
           result = False
 
     return result
@@ -686,8 +678,13 @@ exit_code = 1
 
 if data_ok():
    if options_ok( options ):
-      if get_individuals( options['include'], options['personid'], options['iditem'] ):
-         if output_data( options['format'], options['reverse'] ):
-            exit_code = 0
+      tree_top = find_person( options['personid'], options['iditem'] )
+      if tree_top is None:
+         print( 'Did not locate specified person', person_id, 'in', id_item, file=sys.stderr )
+         result = False
+      else:
+         if get_individuals( options['include'], tree_top ):
+            if output_data( options['format'], options['reverse'] ):
+               exit_code = 0
 
 sys.exit( exit_code )
