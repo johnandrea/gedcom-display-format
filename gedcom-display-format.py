@@ -27,7 +27,7 @@ UNION_LABEL = '@'
 
 
 def show_version():
-    print( '2.3.3' )
+    print( '2.3.4' )
 
 
 def load_my_module( module_name, relative_path ):
@@ -478,7 +478,6 @@ def add_descendents( indi ):
 def get_individuals( who_to_include, the_person ):
     global the_individuals
     global the_families
-    global the_person
 
     result = True
 
@@ -564,7 +563,7 @@ def json_descendents( indi ):
     return results
 
 
-def output_json():
+def output_json( the_person ):
     output = dict()
 
     # the contents are slightly different depending on the direction
@@ -577,7 +576,7 @@ def output_json():
     json.dump( output, indent=1, fp=sys.stdout )
 
 
-def output_data( out_format, reverse_links ):
+def output_data( out_format, reverse_links, selected_person ):
     result = True
 
     # put each person into a node
@@ -611,7 +610,7 @@ def output_data( out_format, reverse_links ):
        dot_trailer()
 
     elif out_format == 'json':
-       output_json()
+       output_json( selected_person )
 
     else:
        # unlikely to get here, but just in case i've made a typo
@@ -672,19 +671,18 @@ data = readgedcom.read_file( options['infile'] )
 # find the people that should be output
 the_individuals = []
 the_families = []
-the_person = None
 
 exit_code = 1
 
 if data_ok():
    if options_ok( options ):
-      tree_top = find_person( options['personid'], options['iditem'] )
-      if tree_top is None:
-         print( 'Did not locate specified person', person_id, 'in', id_item, file=sys.stderr )
+      indi = find_person( options['personid'], options['iditem'] )
+      if indi is None:
+         print( 'Did not locate specified person', options['personid'], 'in', options['iditem'], file=sys.stderr )
          result = False
       else:
-         if get_individuals( options['include'], tree_top ):
-            if output_data( options['format'], options['reverse'] ):
+         if get_individuals( options['include'], indi ):
+            if output_data( options['format'], options['reverse'], indi ):
                exit_code = 0
 
 sys.exit( exit_code )
