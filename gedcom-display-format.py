@@ -6,7 +6,6 @@ a network visualization too.
 
 This code is released under the MIT License: https://opensource.org/licenses/MIT
 Copyright (c) 2022 John A. Andrea
-v2.3.0
 
 No support provided.
 """
@@ -26,6 +25,9 @@ PARENT_CONNECT = 'black'
 CHILD_CONNECT = 'orange'
 UNION_LABEL = '@'
 
+
+def show_version():
+    print( '2.3.2' )
 
 
 def load_my_module( module_name, relative_path ):
@@ -59,6 +61,7 @@ def load_my_module( module_name, relative_path ):
 def get_program_options():
     results = dict()
 
+    results['version'] = False
     results['format'] = 'graphml'
     results['infile'] = None
     results['include'] = 'all'
@@ -70,6 +73,9 @@ def get_program_options():
 
     arg_help = 'Convert gedcom to network graph format.'
     parser = argparse.ArgumentParser( description=arg_help )
+
+    arg_help = 'Show version then exit.'
+    parser.add_argument( '--version', default=results['version'], action='store_true', help=arg_help )
 
     formats = [results['format'], 'dot', 'json']
     arg_help = 'Output format. One of: ' + str(formats) + ', Default: ' + results['format']
@@ -106,6 +112,7 @@ def get_program_options():
 
     args = parser.parse_args()
 
+    results['version'] = args.version
     results['format'] = args.format.lower()
     results['include'] = args.include.lower()
     results['personid'] = args.personid
@@ -654,6 +661,10 @@ def options_ok( program_options ):
 
 
 options = get_program_options()
+
+if options['version']:
+   show_version()
+   sys.exit( 0 )
 
 if not os.path.isdir( options['libpath'] ):
    print( 'Path to readgedcom is not a directory', file=sys.stderr )
