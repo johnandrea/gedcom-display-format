@@ -11,6 +11,10 @@ Output files can be used in display tools such as:
 
 ## Options ##
 
+--version
+
+Display version number then exit.
+
 --format= graphml or dot or json
 
 Type of output file produced. Default is graphml.
