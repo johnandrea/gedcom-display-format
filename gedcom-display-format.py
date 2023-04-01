@@ -622,7 +622,7 @@ def output_newick( tree_top ):
               if older_sibling_had_children:
                  # youngest sibling had children so finish siblings on new line
                  print( '\n' + indent, end='' )
-              print( ')', end='' )
+              print( '):1', end='' )
 
         return has_children
 
