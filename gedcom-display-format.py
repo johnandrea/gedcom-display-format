@@ -628,7 +628,7 @@ def output_newick( tree_top ):
 
     print( '(' + simple_name(tree_top) + ':1', end='' )
     descendant_list( indent_add, tree_top )
-    print( '\n)' )
+    print( '\n);' )
 
 
 def output_data( out_format, reverse_links, picked_person ):
