@@ -27,7 +27,7 @@ UNION_LABEL = '@'
 
 
 def show_version():
-    print( '2.4.0' )
+    print( '2.4.2' )
 
 
 def load_my_module( module_name, relative_path ):
@@ -586,7 +586,8 @@ def output_newick( tree_top ):
         return get_name(indi, 'html').replace(' ', '_').replace(':','_')
 
     def descendant_list( indent, indi ):
-        # get all the children
+        # the line breaks are not part of the format, its for human viewers
+
         has_children = False
         if 'fams' in data[ikey][indi] and data[ikey][indi]['fams']:
 
@@ -720,10 +721,6 @@ options = get_program_options()
 if options['version']:
    show_version()
    sys.exit( 0 )
-
-if not os.path.isdir( options['libpath'] ):
-   print( 'Path to readgedcom is not a directory', file=sys.stderr )
-   sys.exit( 1 )
 
 readgedcom = load_my_module( 'readgedcom', options['libpath'] )
 
