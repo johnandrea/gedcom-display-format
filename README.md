@@ -54,7 +54,7 @@ Include birth and death years with the names.
   
 --libpath=directory-containing-readgedcom
 
-The path is relative to the program being used. An absolute path will not work. Default is the same location as the program (".").
+Location containing the readgedcom.py library file. The path is relative to the program being used. An absolute path will not work. Default is the same location as the program (".").
 
 ## Usage ##
 
