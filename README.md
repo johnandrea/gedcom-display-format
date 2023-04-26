@@ -53,9 +53,8 @@ The tag in the gedcom file used to match the specified person. Default is xref w
 Include birth and death years with the names.
   
 --libpath=directory-containing-readgedcom
-  
-Path of the directory containing the required readgedcom library file. Default os the current directory (.).
 
+The path is relative to the program being used. An absolute path will not work. Default is the same location as the program (".").
 
 ## Usage ##
 
