@@ -27,7 +27,7 @@ UNION_LABEL = '@'
 
 
 def show_version():
-    print( '2.4.2' )
+    print( '2.4.3' )
 
 
 def load_my_module( module_name, relative_path ):
@@ -69,6 +69,7 @@ def get_program_options():
     results['iditem'] = 'xref'
     results['dates'] = False
     results['reverse'] = False
+    results['thick'] = 1
     results['libpath'] = '.'
 
     arg_help = 'Convert gedcom to network graph format.'
@@ -104,6 +105,10 @@ def get_program_options():
     arg_help = 'For dot file output, reverse the order of the links.'
     parser.add_argument( '--reverse', default=results['reverse'], action='store_true', help=arg_help )
 
+    # this option can be repeated for extra thickness
+    arg_help = 'Increase width of connecting lines'
+    parser.add_argument( '--thick', action='count', help=arg_help )
+
     # maybe this should be changed to have a type which better matched a directory
     arg_help = 'Location of the gedcom library. Default is current directory.'
     parser.add_argument( '--libpath', default=results['libpath'], type=str, help=arg_help )
@@ -121,6 +126,10 @@ def get_program_options():
     results['infile'] = args.infile.name
     results['reverse'] = args.reverse
     results['libpath'] = args.libpath
+
+    value = args.thick
+    if value:
+       results['thick'] += value
 
     # change to full words
     key = 'include'
@@ -322,8 +331,9 @@ def dot_header():
     print( 'digraph family {' )
 
 
-def dot_setup():
+def dot_setup( thickness ):
     print( 'node [shape=record];' )
+    print( 'edge [penwidth=' + str( thickness ) + '];' )
     print( 'rankdir=LR;' )
 
 
@@ -632,7 +642,7 @@ def output_newick( tree_top ):
     print( '\n);' )
 
 
-def output_data( out_format, reverse_links, picked_person ):
+def output_data( out_format, reverse_links, thickness, picked_person ):
     result = True
 
     # put each person into a node
@@ -657,7 +667,7 @@ def output_data( out_format, reverse_links, picked_person ):
 
     elif out_format == 'dot':
        dot_header()
-       dot_setup()
+       dot_setup( thickness )
 
        n_nodes = dot_families( n_nodes, indi_nodes, fam_nodes )
        n_nodes = dot_not_families( n_nodes, indi_nodes )
@@ -743,7 +753,7 @@ if data_ok():
          result = False
       else:
          if get_individuals( options['include'], indi ):
-            if output_data( options['format'], options['reverse'], indi ):
+            if output_data( options['format'], options['reverse'], options['thick'], indi ):
                exit_code = 0
 
 sys.exit( exit_code )
