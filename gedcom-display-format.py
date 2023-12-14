@@ -26,8 +26,8 @@ CHILD_CONNECT = 'orange'
 UNION_LABEL = '@'
 
 
-def show_version():
-    print( '2.4.3' )
+def get_version():
+    return '2.5'
 
 
 def load_my_module( module_name, relative_path ):
@@ -61,7 +61,6 @@ def load_my_module( module_name, relative_path ):
 def get_program_options():
     results = dict()
 
-    results['version'] = False
     results['format'] = 'graphml'
     results['infile'] = None
     results['include'] = 'all'
@@ -76,7 +75,7 @@ def get_program_options():
     parser = argparse.ArgumentParser( description=arg_help )
 
     arg_help = 'Show version then exit.'
-    parser.add_argument( '--version', default=results['version'], action='store_true', help=arg_help )
+    parser.add_argument( '--version', action='version', version=get_version() )
 
     formats = [results['format'], 'dot', 'json', 'newick']
     arg_help = 'Output format. One of: ' + str(formats) + ', Default: ' + results['format']
@@ -117,7 +116,6 @@ def get_program_options():
 
     args = parser.parse_args()
 
-    results['version'] = args.version
     results['format'] = args.format.lower()
     results['include'] = args.include.lower()
     results['personid'] = args.personid
@@ -727,10 +725,6 @@ def options_ok( program_options ):
 
 
 options = get_program_options()
-
-if options['version']:
-   show_version()
-   sys.exit( 0 )
 
 readgedcom = load_my_module( 'readgedcom', options['libpath'] )
 
