@@ -35,6 +35,10 @@ If choosing anything except "all", the personid option is required to select a p
 In dot format output, reverse the direction of the parent to child links in order to
 flip the orientation of the whole graph.
 
+--thick
+
+Increase the size of the connecting lines in DOT format output. Can be included multiple times for extra thickness.
+
 --personid= <id value>
   
 The id of the person to select for output. Used in combination with the iditem option.
