@@ -27,7 +27,7 @@ UNION_LABEL = '@'
 
 
 def get_version():
-    return '2.6'
+    return '2.7'
 
 
 def load_my_module( module_name, relative_path ):
@@ -746,9 +746,9 @@ if data_ok():
          indi = find_person( options['personid'], options['iditem'] )
          if indi is None:
             print( 'Did not locate specified person', options['personid'], 'in', options['iditem'], file=sys.stderr )
-      else:
-         if get_individuals( options['include'], indi ):
-            if output_data( options['format'], options['reverse'], options['thick'], indi ):
-               exit_code = 0
+            sys.exit(exit_code)
+      if get_individuals( options['include'], indi ):
+         if output_data( options['format'], options['reverse'], options['thick'], indi ):
+            exit_code = 0
 
 sys.exit( exit_code )
