@@ -105,5 +105,6 @@ Newick: https://en.wikipedia.org/wiki/Newick_format
 ## Future ##
 
 - option to colour a descendant branch. Maybe multiple branches.
+- find a way to help Graphviz reduce line crossing, in particular with the include=all option. Maybe subgraphs or combining parents into a single item.
 - complain or abort if more than one individual is found via personid/iditem
 - allow multiple personid/iditem to help select the desired person
