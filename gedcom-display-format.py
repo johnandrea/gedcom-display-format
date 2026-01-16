@@ -27,7 +27,7 @@ UNION_LABEL = '@'
 
 
 def get_version():
-    return '3.1'
+    return '3.2'
 
 
 def load_my_module( module_name, relative_path ):
@@ -430,9 +430,11 @@ def dot_connectors( indi_nodes, fam_nodes, reverse_links ):
 
 def find_person( person, item ):
     # it is possible that the selected person is not found
-    result = None
+    # or more than one
 
     if item == 'xref':
+       result = []
+
        # ensure the person lookup is the same as what it used in gedcom
        # if given  5  change to  @I5@
        person = 'i' + person.lower()
@@ -443,16 +445,13 @@ def find_person( person, item ):
            rec_no = data[ikey][indi]['file_record']['index']
            rec_key = data[ikey][indi]['file_record']['key']
            if person == data[rec_key][rec_no]['tag'].lower():
-              result = indi
+              result.append( indi )
+              # assume only one xref indi
               break
 
-    else:
-       found = readgedcom.find_individuals( data, item, person )
-       if found:
-          # just take the first one
-          result = found[0]
+       return result
 
-    return result
+    return readgedcom.find_individuals( data, item, person )
 
 
 def add_ancestors( indi ):
@@ -689,9 +688,15 @@ if data_ok():
    if options_ok( options ):
       indi = None
       if options['include'] != 'all':
-         indi = find_person( options['personid'], options['iditem'] )
-         if indi is None:
-            print( 'Did not locate specified person', options['personid'], 'in', options['iditem'], file=sys.stderr )
+         indi_found = find_person( options['personid'], options['iditem'] )
+         if indi_found:
+            if len( indi_found ) == 1:
+               indi = indi_found[0]
+            else:
+               print( 'Found more than one start person', options['personid'], 'in', options['iditem'], file=sys.stderr )
+               sys.exit(exit_code)
+         else:
+            print( 'Did not locate start person', options['personid'], 'in', options['iditem'], file=sys.stderr )
             sys.exit(exit_code)
       if get_individuals( options['include'], indi ):
          if output_data( options['format'], options['reverse'], options['thick'], indi ):
