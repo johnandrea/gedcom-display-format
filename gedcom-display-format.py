@@ -27,7 +27,7 @@ UNION_LABEL = '@'
 
 
 def get_version():
-    return '3.0'
+    return '3.1'
 
 
 def load_my_module( module_name, relative_path ):
@@ -61,7 +61,7 @@ def load_my_module( module_name, relative_path ):
 def get_program_options():
     results = dict()
 
-    results['format'] = 'graphml'
+    results['format'] = 'dot'
     results['infile'] = None
     results['include'] = 'all'
     results['personid'] = None
