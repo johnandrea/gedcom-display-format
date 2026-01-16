@@ -27,7 +27,7 @@ UNION_LABEL = '@'
 
 
 def get_version():
-    return '2.7'
+    return '3.0'
 
 
 def load_my_module( module_name, relative_path ):
@@ -77,7 +77,7 @@ def get_program_options():
     arg_help = 'Show version then exit.'
     parser.add_argument( '--version', action='version', version=get_version() )
 
-    formats = [results['format'], 'dot', 'json', 'newick']
+    formats = [results['format'], 'dot', 'json', 'dot2']
     arg_help = 'Output format. One of: ' + str(formats) + ', Default: ' + results['format']
     parser.add_argument( '--format', default=formats, choices=formats, type=str, help=arg_help )
 
@@ -347,7 +347,7 @@ def make_dot_ftag( n ):
     return 'f' + str( n )
 
 
-def dot_families( n, indi_nodes, fam_nodes ):
+def dot_families( style2, n, indi_nodes, fam_nodes ):
     for fam in the_families:
         if fam not in fam_nodes:
 
@@ -365,13 +365,22 @@ def dot_families( n, indi_nodes, fam_nodes ):
                if partner in data[fkey][fam]:
                   person_id = data[fkey][fam][partner][0]
                   # first char of partner matches 'h' and 'w' in structure
-                  indi_nodes[person_id] = { 'tag':fam_tag, 'key':partner[0:1] }
+                  fam_key = partner[0:1]
+                  if style2:
+                     # for this style, no separate parents
+                     fam_key = 'u'
+                  indi_nodes[person_id] = { 'tag':fam_tag, 'key':fam_key }
                   names[partner] = get_name_dot( person_id )
 
            out = fam_tag + ' [label="'
-           out += '<h>' + names['husb']
-           out += '|<u>|'  # potentially marriage date could go in here
-           out += '<w>' + names['wife']
+           if style2:
+              # both parents together, helps with reducing line crossing
+              out += '<u>' + names['husb']
+              out += '\\n& ' + names['wife']
+           else:
+              out += '<h>' + names['husb']
+              out += '|<u>|'  # potentially marriage date could go in here
+              out += '<w>' + names['wife']
            out += '"];'
            print( out )
 
@@ -584,62 +593,6 @@ def output_json( the_person ):
     json.dump( output, indent=1, fp=sys.stdout )
 
 
-def output_newick( tree_top ):
-    print( 'This output is experimental.', file=sys.stderr )
-
-    indent_add = '  '
-
-    def simple_name( indi ):
-        # can't have a space or colon
-        return get_name(indi, 'html').replace(' ', '_').replace(':','_')
-
-    def descendant_list( indent, indi ):
-        # the line breaks are not part of the format, its for human viewers
-
-        has_children = False
-        if 'fams' in data[ikey][indi] and data[ikey][indi]['fams']:
-
-           # set these flags above check for children in case of multiple families
-
-           # start children on a new line
-           older_sibling_had_children = False
-
-           first_born = True
-
-           for fam in data[ikey][indi]['fams']:
-               if 'chil' in data[fkey][fam] and data[fkey][fam]['chil']:
-                  has_children = True
-
-                  if first_born:
-                     print( ',\n' + indent + '(', end='' )
-
-                  for child in data[fkey][fam]['chil']:
-                      if first_born:
-                         first_born = False
-                      else:
-                         print( ',', end='' )
-
-                      if older_sibling_had_children:
-                         # then this child starts on a new line
-                         print( '\n' + indent, end='' )
-
-                      print( simple_name(child) + ':1', end='' )
-
-                      older_sibling_had_children = descendant_list( indent + indent_add, child )
-
-           if has_children:
-              if older_sibling_had_children:
-                 # youngest sibling had children so finish siblings on new line
-                 print( '\n' + indent, end='' )
-              print( '):1', end='' )
-
-        return has_children
-
-    print( '(' + simple_name(tree_top) + ':1', end='' )
-    descendant_list( indent_add, tree_top )
-    print( '\n);' )
-
-
 def output_data( out_format, reverse_links, thickness, picked_person ):
     result = True
 
@@ -663,11 +616,13 @@ def output_data( out_format, reverse_links, thickness, picked_person ):
        end_graphml()
        graphml_trailer()
 
-    elif out_format == 'dot':
+    elif out_format in ['dot','dot2']:
+       style2 = out_format == 'dot2'
+
        dot_header()
        dot_setup( thickness )
 
-       n_nodes = dot_families( n_nodes, indi_nodes, fam_nodes )
+       n_nodes = dot_families( style2, n_nodes, indi_nodes, fam_nodes )
        n_nodes = dot_not_families( n_nodes, indi_nodes )
        dot_connectors( indi_nodes, fam_nodes, reverse_links )
 
@@ -675,9 +630,6 @@ def output_data( out_format, reverse_links, thickness, picked_person ):
 
     elif out_format == 'json':
        output_json( picked_person )
-
-    elif out_format == 'newick':
-       output_newick( picked_person )
 
     else:
        # unlikely to get here, but just in case i've made a typo
@@ -713,12 +665,6 @@ def options_ok( program_options ):
     if program_options['include'] != 'all':
        if program_options['personid'] is None:
           print( 'include other than "all" requires a personid', file=sys.stderr )
-          result = False
-
-    if program_options['format'] == 'newick':
-       allowed = ['descendents']
-       if program_options['include'] not in allowed:
-          print( 'Newick format is only compatible with', allowed, file=sys.stderr )
           result = False
 
     return result
