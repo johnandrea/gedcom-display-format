@@ -8,7 +8,6 @@ The display may be of limited value for large trees as it takes a long time to a
 Output files can be used in display tools such as:
 - Cytoscape: https://cytoscape.org
 - GraphViz: https://graphviz.org
-- Dendroscope (for Newick): https://en.wikipedia.org/wiki/Dendroscope
 
 ## Options ##
 
@@ -16,10 +15,10 @@ Output files can be used in display tools such as:
 
 Display version number then exit.
 
---format= graphml or dot or json or newick
+--format= dot or dot2 or graphml or json
 
-Type of output file produced. Default is graphml.
-Newick format is experimental.
+Type of output file produced. Default is dot.
+The dot2 format compresses parents into a single block which helps with reducing crossed connecting lines; in particular with include=all.
 
 JSON is not available for including "all" or "branch".
 
@@ -88,8 +87,6 @@ gedcom-display-format.py --format=dot --include=anc --personid=432 --iditem=exid
 GraphML: http://graphml.graphdrawing.org
 
 DOT: https://graphviz.org/doc/info/lang.html
-
-Newick: https://en.wikipedia.org/wiki/Newick_format
 
 ## Installation ##
 
