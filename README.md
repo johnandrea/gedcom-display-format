@@ -55,7 +55,7 @@ The tag in the gedcom file used to match the specified person. Default is xref w
   
 Include birth and death years with the names.
 
---colour= comma separarted list of parents to have coloured descandents
+--colour= comma separarted list of parents to have coloured descendents
 
 For large or complicated trees it might aid readability if descendent branches have coloured lines. This applies only to dot and dot2 formats, and not for include=ancestors. The list of selections are parent values based on the iditem option. You may need to pay attention to the ordering of the list to prevent an older generation overwriting the colour of a younger generation; i.e. younger generations should be listed last.
   
