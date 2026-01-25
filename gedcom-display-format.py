@@ -17,8 +17,12 @@ import json
 import importlib.util
 import os
 
+# for the connecting lines when the options allow colouring
+line_colors = ['orchid', 'tomato', 'lightseagreen']
+line_colors.extend( ['chocolate', 'forestgreen', 'darkorange', 'teal'] )
+line_colors.extend( ['yellowgreen', 'coral', 'royalblue', 'salmon'] )
 
-# these colors for GraphML
+# these colours for GraphML
 NAME_COLOR = 'olive'
 UNION_COLOR = 'lightsalmon'
 PARENT_CONNECT = 'black'
@@ -27,7 +31,7 @@ UNION_LABEL = '@'
 
 
 def get_version():
-    return '3.2'
+    return '4.0'
 
 
 def load_my_module( module_name, relative_path ):
@@ -71,6 +75,8 @@ def get_program_options():
     results['thick'] = 1
     results['libpath'] = '.'
 
+    results['color-tree'] = None
+
     arg_help = 'Convert gedcom to network graph format.'
     parser = argparse.ArgumentParser( description=arg_help )
 
@@ -112,6 +118,10 @@ def get_program_options():
     arg_help = 'Location of the gedcom library. Default is current directory.'
     parser.add_argument( '--libpath', default=results['libpath'], type=str, help=arg_help )
 
+    arg_help = 'List of people who\'s descendant lines will be coloured.'
+    arg_help += ' Identified by the --iditem tag. Only for dot and dot2 formats.'
+    parser.add_argument( '--colouring', default=None, type=str, help=arg_help )
+
     parser.add_argument('infile', type=argparse.FileType('r') )
 
     args = parser.parse_args()
@@ -124,6 +134,8 @@ def get_program_options():
     results['infile'] = args.infile.name
     results['reverse'] = args.reverse
     results['libpath'] = args.libpath
+
+    results['color-tree'] = args.colouring
 
     value = args.thick
     if value:
@@ -413,19 +425,23 @@ def dot_not_families( n, indi_nodes ):
     return n
 
 
-def dot_connectors( indi_nodes, fam_nodes, reverse_links ):
+def dot_connectors( indi_nodes, fam_nodes, reverse_links, use_colors ):
     # connections from people to their parent unions
+
     for indi in the_individuals:
         if 'famc' in data[ikey][indi]:
-           child_of = data[ikey][indi]['famc'][0]
-           if child_of in the_families:
-              f_link = fam_nodes[child_of]['tag'] +':'+ fam_nodes[child_of]['key']
+           fam_of_child = data[ikey][indi]['famc'][0]
+           if fam_of_child in the_families:
+              color = ''
+              if fam_of_child in use_colors:
+                  color = ' [penwidth=2, color="' + use_colors[fam_of_child] + '"]'
+              f_link = fam_nodes[fam_of_child]['tag'] +':'+ fam_nodes[fam_of_child]['key']
               i_link = indi_nodes[indi]['tag'] +':'+ indi_nodes[indi]['key']
 
               if reverse_links:
-                 print( i_link + ' -> ' + f_link + ';' )
+                 print( i_link + ' -> ' + f_link + color + ';' )
               else:
-                 print( f_link + ' -> ' + i_link + ';' )
+                 print( f_link + ' -> ' + i_link + color + ';' )
 
 
 def find_person( person, item ):
@@ -592,7 +608,7 @@ def output_json( the_person ):
     json.dump( output, indent=1, fp=sys.stdout )
 
 
-def output_data( out_format, reverse_links, thickness, picked_person ):
+def output_data( out_format, reverse_links, thickness, use_color, picked_person ):
     result = True
 
     # put each person into a node
@@ -623,7 +639,7 @@ def output_data( out_format, reverse_links, thickness, picked_person ):
 
        n_nodes = dot_families( style2, n_nodes, indi_nodes, fam_nodes )
        n_nodes = dot_not_families( n_nodes, indi_nodes )
-       dot_connectors( indi_nodes, fam_nodes, reverse_links )
+       dot_connectors( indi_nodes, fam_nodes, reverse_links, use_color )
 
        dot_trailer()
 
@@ -669,6 +685,59 @@ def options_ok( program_options ):
     return result
 
 
+def find_color_people( tag, include, out_format, selected_tops ):
+    results = dict()
+
+    # prevent loops
+    fam_is_set = []
+
+    def set_color_descendants( p, color ):
+        if 'fams' in data[ikey][p]:
+           for fam in data[ikey][p]['fams']:
+               if fam not in fam_is_set:
+                  fam_is_set.append( fam )
+                  results[fam] = color
+                  if 'chil' in data[fkey][fam]:
+                     for child in data[fkey][fam]['chil']:
+                         set_color_descendants( child, color )
+
+
+    if not selected_tops:
+       return results
+    if out_format not in ['dot','dot2']:
+       return results
+    if include.startswith('desc'):
+       return results
+
+    # the selected people are parents, but we need to find all the
+    # and the lines are drawn out of family boxes
+
+    # first get the xref of the selected parents
+
+    search_for = selected_tops.split(',')
+    parents = []
+    for indi in search_for:
+        found_id = find_person( indi, tag )
+        if found_id[0] in the_individuals:
+           parents.append( found_id[0] )
+
+    if parents:
+       i_color = 0
+       n_color = len( line_colors )
+       for indi in parents:
+           if i_color == n_color:
+              i_color = 0
+
+           # all descandants get the same color
+           # unless another parent color from another family replaces it
+           # so if a family was coloured it can be re-coloured
+           fam_is_set = []
+           set_color_descendants( indi, line_colors[i_color] )
+
+           i_color += 1
+    return results
+
+
 options = get_program_options()
 
 readgedcom = load_my_module( 'readgedcom', options['libpath'] )
@@ -698,8 +767,10 @@ if data_ok():
          else:
             print( 'Did not locate start person', options['personid'], 'in', options['iditem'], file=sys.stderr )
             sys.exit(exit_code)
+
       if get_individuals( options['include'], indi ):
-         if output_data( options['format'], options['reverse'], options['thick'], indi ):
+         use_color = find_color_people( options['iditem'], options['include'], options['format'], options['color-tree'] )
+         if output_data( options['format'], options['reverse'], options['thick'], use_color, indi ):
             exit_code = 0
 
 sys.exit( exit_code )
