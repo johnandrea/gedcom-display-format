@@ -109,5 +109,4 @@ DOT: https://graphviz.org/doc/info/lang.html
   
 ## Future ##
 
-- option to colour a descendant branch. Maybe multiple branches.
 - find more way to help Graphviz reduce line crossing, in particular with the include=all option. Maybe subgraphs or combining parents into a single item.
