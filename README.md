@@ -54,6 +54,10 @@ The tag in the gedcom file used to match the specified person. Default is xref w
 --dates
   
 Include birth and death years with the names.
+
+--colour= <comma separarted list of parents to have coloured descandents>
+
+For large or complicated trees it might aid readability if descendent branches have coloured lines. This applies only to dot and dot2 formats, and not for include=ancestors. The list of selections are parent values based on the iditem option. You may need to pay attention to the ordering of the list to prevent an older generation overwriting the colour of a younger generation; i.e. younger generations should be listed last.
   
 --libpath=directory-containing-readgedcom
 
@@ -80,6 +84,10 @@ gedcom-display-format.py --include=branch --personid=15 gedcom-filename > file.g
 The ancestors of person with EXID of 432
 ```
 gedcom-display-format.py --format=dot --include=anc --personid=432 --iditem=exid gedcom-filename > file.dot
+```
+Output everyone with a couple of branches having colour. Using REFN tag as the person identifiers.
+```
+gedcom-display-format.py --format=dot2 --iditem=refn --colo=72,103,428 bigfam.ged >bigfam.dot
 ```
 
 ## Output Formats ##
