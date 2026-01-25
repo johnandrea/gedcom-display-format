@@ -18,9 +18,9 @@ import importlib.util
 import os
 
 # for the connecting lines when the options allow colouring
-line_colors = ['orchid', 'tomato', 'lightseagreen']
-line_colors.extend( ['chocolate', 'forestgreen', 'darkorange', 'teal'] )
-line_colors.extend( ['yellowgreen', 'coral', 'royalblue', 'salmon'] )
+line_colors = ['orchid', 'firebrick', 'lightseagreen', 'burlywood']
+line_colors.extend( ['gold', 'salmon', 'forestgreen', 'darkorange'] )
+line_colors.extend( ['teal', 'chartreuse', 'royalblue' ] )
 
 # these colours for GraphML
 NAME_COLOR = 'olive'
@@ -31,7 +31,7 @@ UNION_LABEL = '@'
 
 
 def get_version():
-    return '4.0.1'
+    return '4.1'
 
 
 def load_my_module( module_name, relative_path ):
@@ -722,7 +722,7 @@ def find_color_people( tag, include, out_format, selected_tops ):
            if found_id[0] in the_individuals:
               parents.append( found_id[0] )
         else:
-           print( 'Warning: did\'t find person for coloured lines', indi, 'using tag', tag, file=sys.stderr ) 
+           print( 'Warning: did\'t find person for coloured lines', indi, 'using tag', tag, file=sys.stderr )
 
     if parents:
        i_color = 0
