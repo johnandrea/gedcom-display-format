@@ -31,7 +31,7 @@ UNION_LABEL = '@'
 
 
 def get_version():
-    return '4.0'
+    return '4.0.1'
 
 
 def load_my_module( module_name, relative_path ):
@@ -718,8 +718,11 @@ def find_color_people( tag, include, out_format, selected_tops ):
     parents = []
     for indi in search_for:
         found_id = find_person( indi, tag )
-        if found_id[0] in the_individuals:
-           parents.append( found_id[0] )
+        if found_id:
+           if found_id[0] in the_individuals:
+              parents.append( found_id[0] )
+        else:
+           print( 'Warning: did\'t find person for coloured lines', indi, 'using tag', tag, file=sys.stderr ) 
 
     if parents:
        i_color = 0
