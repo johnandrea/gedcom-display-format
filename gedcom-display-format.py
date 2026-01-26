@@ -18,9 +18,11 @@ import importlib.util
 import os
 
 # for the connecting lines when the options allow colouring
-line_colors = ['orchid', 'firebrick', 'lightseagreen', 'burlywood']
-line_colors.extend( ['gold', 'salmon', 'forestgreen', 'darkorange'] )
-line_colors.extend( ['teal', 'chartreuse', 'royalblue' ] )
+# a subset based on https://sashamaps.net/docs/resources/20-colors/
+line_colors = ['crimson','mediumseagreen','gold','steelblue']
+line_colors.extend( ['orange','darkviolet','turquoise','palegreen'] )
+line_colors.extend( ['magenta','greenyellow','pink','thistle','peru'] )
+line_colors.extend( ['olive','navy','khaki'] )
 
 # these colours for GraphML
 NAME_COLOR = 'olive'
@@ -31,7 +33,7 @@ UNION_LABEL = '@'
 
 
 def get_version():
-    return '4.1'
+    return '4.1.1'
 
 
 def load_my_module( module_name, relative_path ):
