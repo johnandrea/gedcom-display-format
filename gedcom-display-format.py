@@ -19,6 +19,7 @@ import os
 
 # for the connecting lines when the options allow colouring
 # a subset based on https://sashamaps.net/docs/resources/20-colors/
+# also see: https://colorbrewer2.org/#type=qualitative&scheme=Set3&n=10
 line_colors = ['crimson','mediumseagreen','gold','steelblue']
 line_colors.extend( ['orange','darkviolet','turquoise','palegreen'] )
 line_colors.extend( ['magenta','greenyellow','pink','thistle','peru'] )
@@ -33,7 +34,7 @@ UNION_LABEL = '@'
 
 
 def get_version():
-    return '4.1.1'
+    return '4.2.0'
 
 
 def load_my_module( module_name, relative_path ):
@@ -85,7 +86,7 @@ def get_program_options():
     arg_help = 'Show version then exit.'
     parser.add_argument( '--version', action='version', version=get_version() )
 
-    formats = [results['format'], 'dot', 'json', 'dot2']
+    formats = [results['format'], 'json', 'dot2']
     arg_help = 'Output format. One of: ' + str(formats) + ', Default: ' + results['format']
     parser.add_argument( '--format', default=formats, choices=formats, type=str, help=arg_help )
 
