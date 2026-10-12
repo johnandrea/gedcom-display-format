@@ -106,6 +106,10 @@ DOT: https://graphviz.org/doc/info/lang.html
   
 - A loop in a family might be trouble
 - Might not escape all non-Latin characters
+
+## Bugs ##
+
+- Multiple marriages get displayed with wrong parent lines
   
 ## Future ##
 
